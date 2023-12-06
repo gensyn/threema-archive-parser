@@ -3,10 +3,79 @@
     <head>
         <meta charset="utf-8">
         <title>$title</title>
+
+        <style>
+            body {
+                background-color: #ffffe6;
+            }
+
+            img, video {
+                max-width: 100%;
+                border-radius: 15px;
+            }
+
+            .content {
+                width: 500px;
+                margin: auto;
+            }
+
+            .date {
+                width: 500px;
+                padding-top: 20px;
+                padding-bottom: 5px;
+                text-align: center;
+                font-weight: bold;
+            }
+
+            .time {
+                font-size: smaller;
+                color: gray;
+                display: block;
+                margin-top: 5px;
+            }
+
+            .time-right {
+                text-align: right;
+            }
+
+            .author {
+                font-size: smaller;
+                font-variant-caps: small-caps;
+                color: gray;
+            }
+
+            .wrapper {
+                width: 100%;
+            }
+
+            .wrapper-right {
+                text-align: right;
+            }
+
+            .message {
+                border-style: solid;
+                border-width: thin;
+                padding: 10px;
+                margin-bottom: 15px;
+                border-radius: 15px;
+                display: inline-block;
+                max-width: 90%;
+                word-break: break-word;
+            }
+
+            .left {
+	            background-color: #e0ebeb;
+            }
+
+            .right {
+	            background-color: #e6ffe6;
+	            text-align: left;
+            }
+        </style>
     </head>
 
     <body>
-        <div>
+        <div class="content">
             $content
         </div>
     </body>
