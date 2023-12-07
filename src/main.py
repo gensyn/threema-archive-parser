@@ -4,11 +4,7 @@ from os import listdir
 from os.path import isdir, isfile, join, basename
 from pathlib import Path
 
-FILE_REGEX = [
-    "(&lt;([a-z0-9]{8}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{12}\.([a-z0-9]{3,4}))&gt;)",
-#    "(&lt;([a-z0-9]{16}-[a-z]*-[0-9]{8}-[0-9]{6,10}\.([a-z0-9]{3,4}))&gt;)",
-    "(&lt;([a-z0-9]{16}-[^\.]*.([a-z0-9]{3,4}))&gt;)"
-]
+FILE_REGEX = "(&lt;((?:[a-f0-9]{8}|[a-f0-9]{16})-.*?\.([a-z0-9]{3,4}))&gt;)"
 
 URL_REGEX = "(https?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+)"
 
@@ -27,18 +23,17 @@ if not isdir(folder):
 def parse_message(path, message):
     message = message.replace("<", "&lt;").replace(">", "&gt;")
 
-    for regex in FILE_REGEX:
-        matches = re.findall(regex, message)
+    matches = re.findall(FILE_REGEX, message)
 
-        for match in matches:
-            if not isfile(join(path, match[1])):
-                message = message.replace(f"{match[0]}", f"<a href=\"{match[1]}\">DATEI FEHLT</a>")
-            elif match[2] in ["jpg", "jpeg", "png"]:
-                message = message.replace(f"{match[0]}", f"<br/><a href=\"{match[1]}\"><img src=\"{match[1]}\" width=300 /></a><br />")
-            elif match[2] in ["mp4"]:
-                message = message.replace(f"{match[0]}", f"<br /><a href=\"{match[1]}\"><video controls><source src=\"{match[1]}\" /></video></a><br />")
-            else:
-                message = message.replace(f"{match[0]}", f"<a href=\"{match[1]}\">{match[1]}</a>")
+    for match in matches:
+        if not isfile(join(path, match[1])):
+            message = message.replace(f"{match[0]}", f"<a href=\"{match[1]}\">DATEI FEHLT</a>")
+        elif match[2] in ["jpg", "jpeg", "png"]:
+            message = message.replace(f"{match[0]}", f"<br/><a href=\"{match[1]}\"><img src=\"{match[1]}\" width=300 /></a><br />")
+        elif match[2] in ["mp4"]:
+            message = message.replace(f"{match[0]}", f"<br /><a href=\"{match[1]}\"><video controls><source src=\"{match[1]}\" /></video></a><br />")
+        else:
+            message = message.replace(f"{match[0]}", f"<a href=\"{match[1]}\">{match[1]}</a>")
 
     matches = list(set(re.findall(URL_REGEX, message)))
 
