@@ -10,6 +10,8 @@ URL_REGEX = "(https?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9
 
 MESSAGE_REGEX = "\[(\d{1,2}\.\d{1,2}\.\d{4}), (\d{1,2}:\d{2})\] (.+?): (.*)"
 
+GEO_REGEX = "(&lt;geo:([0-9\.]*),([0-9\.]*)\?.*&gt;)"
+
 parser = argparse.ArgumentParser("Threema HTML Generator")
 parser.add_argument("folder", help="The folder containing the Threema Chats.")
 args = parser.parse_args()
@@ -23,27 +25,32 @@ if not isdir(folder):
 def parse_message(path, message):
     message = message.replace("<", "&lt;").replace(">", "&gt;")
 
-    matches = re.findall(FILE_REGEX, message)
+    files = re.findall(FILE_REGEX, message)
 
-    for match in matches:
+    for match in files:
         if not isfile(join(path, match[1])):
-            message = message.replace(f"{match[0]}", f"<a href=\"{match[1]}\">DATEI FEHLT</a>")
+            message = message.replace(match[0], f"<a href=\"{match[1]}\">DATEI FEHLT</a>")
         elif match[2] in ["jpg", "jpeg", "png"]:
-            message = message.replace(f"{match[0]}", f"<br/><a href=\"{match[1]}\"><img src=\"{match[1]}\" width=300 /></a><br />")
+            message = message.replace(match[0], f"<br/><a href=\"{match[1]}\"><img src=\"{match[1]}\" width=300 /></a><br />")
         elif match[2] in ["mp4"]:
-            message = message.replace(f"{match[0]}", f"<br /><a href=\"{match[1]}\"><video controls><source src=\"{match[1]}\" /></video></a><br />")
+            message = message.replace(match[0], f"<br /><a href=\"{match[1]}\"><video controls><source src=\"{match[1]}\" /></video></a><br />")
         else:
-            message = message.replace(f"{match[0]}", f"<a href=\"{match[1]}\">{match[1]}</a>")
+            message = message.replace(match[0], f"<a href=\"{match[1]}\">{match[1]}</a>")
 
-    matches = list(set(re.findall(URL_REGEX, message)))
+    urls = list(set(re.findall(URL_REGEX, message)))
 
-    for match in matches:
+    for match in urls:
         message = message.replace(match, f"<a href=\"{match}\">{match}</a>")
 
-    match = re.search(MESSAGE_REGEX, message)
+    geos = re.findall(GEO_REGEX, message)
 
-    if match:
-        return match.group(1), match.group(2), match.group(3), match.group(4)
+    for match in geos:
+        message = message.replace(match[0], f"<a href=\" http://www.google.com/maps/place/{match[1]},{match[2]}\">{match[1]}, {match[2]}</a>")
+
+    message_parts = re.search(MESSAGE_REGEX, message)
+
+    if message_parts:
+        return message_parts.group(1), message_parts.group(2), message_parts.group(3), message_parts.group(4)
 
     return None, None, None, message
 
