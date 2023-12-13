@@ -121,6 +121,9 @@
                 document.getElementById('file').checked = is_all;
                 document.getElementById('location').checked = is_all;
                 document.getElementById('link').checked = is_all;
+                document.getElementById('contains_check').checked = false;
+                document.getElementById('after_check').checked = false;
+                document.getElementById('before_check').checked = false;
 
                 filter();
             }
@@ -133,6 +136,9 @@
                 var is_file = document.getElementById('file').checked;
                 var is_location = document.getElementById('location').checked;
                 var is_link = document.getElementById('link').checked;
+                var is_contains = document.getElementById('contains_check').checked;
+                var is_after = document.getElementById('after_check').checked;
+                var is_before = document.getElementById('before_check').checked;
 
                 document.getElementById('all').checked = is_no_media && is_image && is_video && is_audio && is_file && is_location && is_link;
 
@@ -174,6 +180,48 @@
                         continue;
                     }
 
+                    if (is_contains) {
+                        value = document.getElementById('contains_text').value;
+
+                        if (value && wrapper.children[0].innerHTML.includes(value)) {
+                            wrapper.style.display = 'block';
+                            continue;
+                        }
+                    }
+
+                    if (is_after && is_before) {
+                        value_after = document.getElementById('after_date').value.split("-");
+                        value_after_int = parseInt(value_after[0] + value_after[1] + value_after[2]);
+
+                        value_before = document.getElementById('before_date').value.split("-");
+                        value_before_int = parseInt(value_before[0] + value_before[1] + value_before[2]);
+
+                        if (value_after && value_before && parseInt(wrapper.dataset.date) >= value_after_int && parseInt(wrapper.dataset.date) <= value_before_int) {
+                            wrapper.style.display = 'block';
+                            continue;
+                        }
+                    } else {
+                        if (is_after) {
+                            value = document.getElementById('after_date').value.split("-");
+                            value_int = parseInt(value[0] + value[1] + value[2]);
+
+                            if (value && parseInt(wrapper.dataset.date) >= value_int) {
+                                wrapper.style.display = 'block';
+                                continue;
+                            }
+                        }
+
+                        if (is_before) {
+                            value = document.getElementById('before_date').value.split("-");
+                            value_int = parseInt(value[0] + value[1] + value[2]);
+
+                            if (value && parseInt(wrapper.dataset.date) <= value_int) {
+                                wrapper.style.display = 'block';
+                                continue;
+                            }
+                        }
+                    }
+
                     wrapper.style.display = 'none';
                 }
 
@@ -209,49 +257,82 @@
                     <tbody>
                         <tr>
                             <td colspan="3">
-                                <input type="checkbox" id="all" checked onclick="check_all()">
+                                <input type="checkbox" id="all" checked onclick="check_all()" />
                                 <label for="all">all ($all)</label>
                             </td>
                         </tr>
 
                         <tr>
                             <td>
-                                <input type="checkbox" id="no-media" checked onclick="filter()">
+                                <input type="checkbox" id="no-media" checked onclick="filter()" />
                                 <label for="no-media">without media ($no_media_count)</label>
                             </td>
 
                             <td>
-                                <input type="checkbox" id="image" checked onclick="filter()">
+                                <input type="checkbox" id="image" checked onclick="filter()" />
                                 <label for="image">images ($image_count)</label>
                             </td>
 
                             <td>
-                                <input type="checkbox" id="video" checked onclick="filter()">
+                                <input type="checkbox" id="video" checked onclick="filter()" />
                                 <label for="video">videos ($video_count)</label>
                             </td>
                         </tr>
 
                         <tr>
                             <td>
-                                <input type="checkbox" id="audio" checked onclick="filter()">
+                                <input type="checkbox" id="audio" checked onclick="filter()" />
                                 <label for="audio">audios ($audio_count)</label>
                             </td>
 
                             <td>
-                                <input type="checkbox" id="file" checked onclick="filter()">
+                                <input type="checkbox" id="file" checked onclick="filter()" />
                                 <label for="file">files ($file_count)</label>
                             </td>
 
                             <td>
-                                <input type="checkbox" id="location" checked onclick="filter()">
+                                <input type="checkbox" id="location" checked onclick="filter()" />
                                 <label for="location">locations ($location_count)</label>
                             </td>
                         </tr>
 
                         <tr>
                             <td>
-                                <input type="checkbox" id="link" checked onclick="filter()">
+                                <input type="checkbox" id="link" checked onclick="filter()" />
                                 <label for="link">links ($link_count)</label>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td >
+                                <input type="checkbox" id="contains_check" onclick="filter()" />
+                                <label for="contains_check">message contains:</label>
+                            </td>
+
+                            <td colspan="2">
+                                <input type="text" id="contains_text" onkeyup="document.getElementById('contains_check').checked && filter()" />
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <input type="checkbox" id="after_check" onclick="filter()" />
+                                <label for="after_check">date after:</label>
+                            </td>
+
+                            <td colspan="2">
+                                <input type="date" id="after_date" value="$after_date" min="$min_date" max="$max_date" onchange="document.getElementById('after_check').checked && filter()" />
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <input type="checkbox" id="before_check" onclick="filter()" />
+                                <label for="before_check">date before:</label>
+                            </td>
+
+                            <td colspan="2">
+                                <input type="date" id="before_date" value="$before_date" min="$min_date" max="$max_date" onchange="document.getElementById('before_check').checked && filter()" />
                             </td>
                         </tr>
                     </tbody>

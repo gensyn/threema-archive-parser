@@ -114,6 +114,9 @@ def create_html(path):
     with open(messages_path, "r") as f:
         messages = f.readlines()
 
+    min_date = None
+    max_date = None
+
     content = ""
     previous_date = None
     previous_time = None
@@ -205,10 +208,20 @@ def create_html(path):
             # we are not processing the first element
             content += "</div></div>"
 
-        if date != previous_date:
-            content += f"<div class=\"date\">{date}</div>"
+        date_parts = date.split(".")
 
-        content += f'<div class=\"wrapper wrapper-{align} {" ".join(classes)}\"><div class=\"message {align}\">'
+        day = date_parts[0].zfill(2)
+        month = date_parts[1].zfill(2)
+        year = date_parts[2]
+
+        if date != previous_date:
+            content += f"<div class=\"date\">{day}.{month}.{year}</div>"
+            max_date = f"{year}-{month}-{day}"
+
+            if not min_date:
+                min_date = f"{year}-{month}-{day}"
+
+        content += f'<div class=\"wrapper wrapper-{align} {" ".join(classes)}\" data-date=\"{year}{month}{day}\"><div class=\"message {align}\">'
 
         if author != "Ich":
             content += f'<span class=\"author">{author}</span><br />'
@@ -223,7 +236,7 @@ def create_html(path):
 
     template = Path("src/index_template.html").read_text()
 
-    html = template.replace("$title", name).replace("$content", content).replace("$all", str(message_count)).replace("$no_media_count", str(no_media_count)).replace("$image_count", str(image_count)).replace("$video_count", str(video_count)).replace("$audio_count", str(audio_count)).replace("$file_count", str(file_count)).replace("$link_count", str(link_count)).replace("$location_count", str(location_count))
+    html = template.replace("$title", name).replace("$content", content).replace("$all", str(message_count)).replace("$no_media_count", str(no_media_count)).replace("$image_count", str(image_count)).replace("$video_count", str(video_count)).replace("$audio_count", str(audio_count)).replace("$file_count", str(file_count)).replace("$link_count", str(link_count)).replace("$location_count", str(location_count)).replace("$before_date", str(max_date)).replace("$after_date", str(min_date)).replace("$min_date", str(min_date)).replace("$max_date", str(max_date))
 
     with open(join(path, "index.html"), "w") as f:
         f.write(html)
