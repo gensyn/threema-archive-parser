@@ -14,6 +14,13 @@
                 border-radius: 15px;
             }
 
+            iframe {
+                border: 1px solid black;
+                width: 450px;
+                height: 450px;
+                border-radius: 15px;
+            }
+
             .content {
                 width: 500px;
                 margin: auto;
@@ -71,11 +78,186 @@
 	            background-color: #e6ffe6;
 	            text-align: left;
             }
+
+            table tr:first-of-type td {
+                padding: 10px 0px 10px 0px;
+            }
+
+            details {
+                position: sticky;
+                top: 0px;
+                padding: 8px;
+                background-color: #ffffe6;
+            }
+
+            details>summary input {
+                width: 24px;
+                height: 24px;
+                transition: all 0.3s;
+                margin-left: auto;
+            }
+
+            details[open] summary span.icon {
+                transform: rotate(90deg);
+            }
+
+            summary {
+                cursor: pointer;
+            }
+
+            summary::-webkit-details-marker {
+                display: none;
+            }
         </style>
+
+        <script>
+            function check_all() {
+                var is_all = document.getElementById('all').checked;
+
+                document.getElementById('no-media').checked = is_all;
+                document.getElementById('image').checked = is_all;
+                document.getElementById('video').checked = is_all;
+                document.getElementById('audio').checked = is_all;
+                document.getElementById('file').checked = is_all;
+                document.getElementById('location').checked = is_all;
+                document.getElementById('link').checked = is_all;
+
+                filter();
+            }
+
+            function filter() {
+                var is_no_media = document.getElementById('no-media').checked;
+                var is_image = document.getElementById('image').checked;
+                var is_video = document.getElementById('video').checked;
+                var is_audio = document.getElementById('audio').checked;
+                var is_file = document.getElementById('file').checked;
+                var is_location = document.getElementById('location').checked;
+                var is_link = document.getElementById('link').checked;
+
+                document.getElementById('all').checked = is_no_media && is_image && is_video && is_audio && is_file && is_location && is_link;
+
+                var wrapper_list = document.querySelectorAll('.wrapper');
+
+                for (const wrapper of wrapper_list) {
+                    if (is_no_media && wrapper.className.includes('no_media')) {
+                        wrapper.style.display = 'block';
+                        continue;
+                    }
+
+                    if (is_image && wrapper.className.includes('image')) {
+                        wrapper.style.display = 'block';
+                        continue;
+                    }
+
+                    if (is_video && wrapper.className.includes('video')) {
+                        wrapper.style.display = 'block';
+                        continue;
+                    }
+
+                    if (is_audio && wrapper.className.includes('audio')) {
+                        wrapper.style.display = 'block';
+                        continue;
+                    }
+
+                    if (is_file && wrapper.className.includes('file')) {
+                        wrapper.style.display = 'block';
+                        continue;
+                    }
+
+                    if (is_location && wrapper.className.includes('location')) {
+                        wrapper.style.display = 'block';
+                        continue;
+                    }
+
+                    if (is_link && wrapper.className.includes('link')) {
+                        wrapper.style.display = 'block';
+                        continue;
+                    }
+
+                    wrapper.style.display = 'none';
+                }
+
+                var date_list = document.querySelectorAll('.date');
+
+                date_loop:
+                    for (const date of date_list) {
+                        next_div = date.nextElementSibling;
+
+                        while (next_div != null && !next_div.className.includes('date')) {
+                            if (next_div.style.display != 'none') {
+                                date.style.display = 'block';
+                                continue date_loop;
+                            }
+
+                            next_div = next_div.nextElementSibling;
+                        }
+
+                        date.style.display = 'none';
+                    }
+            }
+        </script>
     </head>
 
     <body>
         <div class="content">
+            <details>
+                <summary>
+                    Filter messages
+                </summary>
+
+                <table>
+                    <tbody>
+                        <tr>
+                            <td colspan="3">
+                                <input type="checkbox" id="all" checked onclick="check_all()">
+                                <label for="all">all ($all)</label>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <input type="checkbox" id="no-media" checked onclick="filter()">
+                                <label for="no-media">without media ($no_media_count)</label>
+                            </td>
+
+                            <td>
+                                <input type="checkbox" id="image" checked onclick="filter()">
+                                <label for="image">images ($image_count)</label>
+                            </td>
+
+                            <td>
+                                <input type="checkbox" id="video" checked onclick="filter()">
+                                <label for="video">videos ($video_count)</label>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <input type="checkbox" id="audio" checked onclick="filter()">
+                                <label for="audio">audios ($audio_count)</label>
+                            </td>
+
+                            <td>
+                                <input type="checkbox" id="file" checked onclick="filter()">
+                                <label for="file">files ($file_count)</label>
+                            </td>
+
+                            <td>
+                                <input type="checkbox" id="location" checked onclick="filter()">
+                                <label for="location">locations ($location_count)</label>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <input type="checkbox" id="link" checked onclick="filter()">
+                                <label for="link">links ($link_count)</label>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </details>
+
             $content
         </div>
     </body>
