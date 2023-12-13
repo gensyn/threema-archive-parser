@@ -46,13 +46,13 @@ def parse_message(path, message):
         for match in files:
             if not isfile(join(path, match[1])):
                 message = message.replace(match[0], f"<a href=\"{match[1]}\">MISSING FILE</a>")
-            elif match[2] in ["jpg", "jpeg", "png"]:
+            elif match[2] in ["jpg", "jpeg", "png", "gif"]:
                 image_count += 1
                 message = message.replace(match[0], f"<br/><a href=\"{match[1]}\"><img src=\"{match[1]}\" width=300 /></a><br />")
             elif match[2] in ["mp4"]:
                 video_count += 1
                 message = message.replace(match[0], f"<br /><a href=\"{match[1]}\"><video controls><source src=\"{match[1]}\" /></video></a><br />")
-            elif match[2] in ["aac"]:
+            elif match[2] in ["aac", "opus"]:
                 audio_count += 1
                 message = message.replace(match[0], f"<br /><a href=\"{match[1]}\"><audio controls src=\"{match[1]}\"></audio></a><br />")
             else:
@@ -187,7 +187,7 @@ def create_html(path):
             file_count += message_file_count
 
         if message_link_count:
-            classes.append(CLASS_FILE)
+            classes.append(CLASS_LINK)
             link_count += message_link_count
 
         if message_location_count:
