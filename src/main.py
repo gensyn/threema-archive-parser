@@ -232,6 +232,7 @@ def create_html(path):
         previous_time = time
         previous_align = align
 
+    content += f"<br /><span class=\"time time-{previous_align}\">{previous_time}</span>"
     content += "</div></div>"
 
     template = Path("src/index_template.html").read_text()
