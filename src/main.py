@@ -1,5 +1,6 @@
 import argparse
 import re
+import shutil
 from os import listdir
 from os.path import isdir, isfile, join, basename
 from pathlib import Path
@@ -31,12 +32,12 @@ if not isdir(folder):
 
 
 def parse_message(path, message):
-    image_count = 0
-    video_count = 0
-    audio_count = 0
-    file_count = 0
-    link_count = 0
-    location_count = 0
+    has_image = False
+    has_video = False
+    has_audio = False
+    has_file = False
+    has_link = False
+    has_location = False
 
     message = message.replace("<", "&lt;").replace(">", "&gt;")
 
@@ -47,22 +48,22 @@ def parse_message(path, message):
             if not isfile(join(path, match[1])):
                 message = message.replace(match[0], f"<a href=\"{match[1]}\">MISSING FILE</a>")
             elif match[2] in ["jpg", "jpeg", "png", "gif"]:
-                image_count += 1
+                has_image = True
                 message = message.replace(match[0], f"<br/><a href=\"{match[1]}\"><img src=\"{match[1]}\" width=300 /></a><br />")
             elif match[2] in ["mp4"]:
-                video_count += 1
+                has_video = True
                 message = message.replace(match[0], f"<br /><a href=\"{match[1]}\"><video controls><source src=\"{match[1]}\" /></video></a><br />")
             elif match[2] in ["aac", "opus"]:
-                audio_count += 1
+                has_audio = True
                 message = message.replace(match[0], f"<br /><a href=\"{match[1]}\"><audio controls src=\"{match[1]}\"></audio></a><br />")
             else:
-                file_count += 1
+                has_file = True
                 message = message.replace(match[0], f"<a href=\"{match[1]}\">{match[1]}</a>")
 
     urls = list(set(re.findall(URL_REGEX, message)))
 
     if urls:
-        link_count += len(urls)
+        has_link = True
 
         for match in urls:
             message = message.replace(match, f"<a href=\"{match}\">{match}</a>")
@@ -70,7 +71,7 @@ def parse_message(path, message):
     geos = re.findall(GEO_REGEX, message)
 
     if geos:
-        location_count += len(geos)
+        has_location = True
 
         for match in geos:
             lat = match[1]
@@ -89,9 +90,9 @@ def parse_message(path, message):
     message_parts = re.search(MESSAGE_REGEX, message)
 
     if message_parts:
-        return message_parts.group(1), message_parts.group(2), message_parts.group(3), message_parts.group(4), image_count, video_count, audio_count, file_count, link_count, location_count
+        return message_parts.group(1), message_parts.group(2), message_parts.group(3), message_parts.group(4), has_image, has_video, has_audio, has_file, has_link, has_location
 
-    return None, None, None, message, image_count, video_count, audio_count, file_count, link_count, location_count
+    return None, None, None, message, has_image, has_video, has_audio, has_file, has_link, has_location
 
 
 def create_html(path):
@@ -123,7 +124,7 @@ def create_html(path):
     previous_align = None
 
     for i in range(len(messages)):
-        date, time, author, message_content, message_image_count, message_video_count, message_audio_count, message_file_count, message_link_count, message_location_count = parse_message(path, messages[i])
+        date, time, author, message_content, message_has_image, message_has_video, message_has_audio, message_has_file, message_has_link, message_has_location = parse_message(path, messages[i])
 
         if not date:
             # this message is just a new line of the previous message and was already processed
@@ -134,7 +135,7 @@ def create_html(path):
         j = i+1
         while j < len(messages):
             # look ahead for messages belonging to this one but seperated by line breaks
-            next_date, _, _, next_message_content, next_image_count, next_video_count, next_audio_count, next_file_count, next_link_count, next_location_count = parse_message(path, messages[j])
+            next_date, _, _, next_message_content, next_has_image, next_has_video, next_has_audio, next_has_file, next_has_link, next_has_location = parse_message(path, messages[j])
 
             if next_date:
                 # new message found, no further look-ahead needed
@@ -142,57 +143,51 @@ def create_html(path):
 
             message_content += f"<br />{next_message_content}"
 
-            if next_image_count:
-                classes.append(CLASS_IMAGE)
-                image_count += next_image_count
+            if next_has_image:
+                message_has_image = True
 
-            if next_video_count:
-                classes.append(CLASS_VIDEO)
-                video_count += next_video_count
+            if next_has_video:
+                message_has_video = True
 
-            if next_audio_count:
-                classes.append(CLASS_AUDIO)
-                audio_count += next_audio_count
+            if next_has_audio:
+                message_has_audio = True
 
-            if next_file_count:
-                classes.append(CLASS_FILE)
-                file_count += next_file_count
+            if next_has_file:
+                message_has_file = True
 
-            if next_link_count:
-                classes.append(CLASS_LINK)
-                link_count += next_link_count
+            if next_has_link:
+                message_has_link = True
 
-            if next_location_count:
-                classes.append(CLASS_LOCATION)
-                location_count += next_location_count
+            if next_has_location:
+                message_has_location = True
 
             j += 1
 
         message_count += 1
 
-        if message_image_count:
+        if message_has_image:
             classes.append(CLASS_IMAGE)
-            image_count += message_image_count
+            image_count += 1
 
-        if message_video_count:
+        if message_has_video:
             classes.append(CLASS_VIDEO)
-            video_count += message_video_count
+            video_count += 1
 
-        if message_audio_count:
+        if message_has_audio:
             classes.append(CLASS_AUDIO)
-            audio_count += message_audio_count
+            audio_count += 1
 
-        if message_file_count:
+        if message_has_file:
             classes.append(CLASS_FILE)
-            file_count += message_file_count
+            file_count += 1
 
-        if message_link_count:
+        if message_has_link:
             classes.append(CLASS_LINK)
-            link_count += message_link_count
+            link_count += 1
 
-        if message_location_count:
+        if message_has_location:
             classes.append(CLASS_LOCATION)
-            location_count += message_location_count
+            location_count += 1
 
         if not classes:
             classes.append(CLASS_NO_MEDIA)
@@ -240,6 +235,8 @@ def create_html(path):
 
     with open(join(path, "index.html"), "w") as f:
         f.write(html)
+
+    shutil.copyfile("src/favicon.ico", join(path, "favicon.ico"))
 
 
 def traverse(path):

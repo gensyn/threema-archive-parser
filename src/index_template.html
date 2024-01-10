@@ -3,6 +3,7 @@
     <head>
         <meta charset="utf-8">
         <title>$title</title>
+        <link rel="icon" type="image/x-icon" href="favicon.ico">
 
         <style>
             body {
@@ -124,8 +125,20 @@
                 document.getElementById('contains_check').checked = false;
                 document.getElementById('after_check').checked = false;
                 document.getElementById('before_check').checked = false;
+            }
+            function check_check_all() {
+                var is_no_media = document.getElementById('no-media').checked;
+                var is_image = document.getElementById('image').checked;
+                var is_video = document.getElementById('video').checked;
+                var is_audio = document.getElementById('audio').checked;
+                var is_file = document.getElementById('file').checked;
+                var is_location = document.getElementById('location').checked;
+                var is_link = document.getElementById('link').checked;
+                var is_contains = document.getElementById('contains_check').checked;
+                var is_after = document.getElementById('after_check').checked;
+                var is_before = document.getElementById('before_check').checked;
 
-                filter();
+                document.getElementById('all').checked = is_no_media && is_image && is_video && is_audio && is_file && is_location && is_link && !is_contains && !is_after && !is_before;
             }
 
             function filter() {
@@ -139,8 +152,6 @@
                 var is_contains = document.getElementById('contains_check').checked;
                 var is_after = document.getElementById('after_check').checked;
                 var is_before = document.getElementById('before_check').checked;
-
-                document.getElementById('all').checked = is_no_media && is_image && is_video && is_audio && is_file && is_location && is_link && !is_contains && !is_after && !is_before;
 
                 var wrapper_list = document.querySelectorAll('.wrapper');
 
@@ -266,75 +277,81 @@
 
                         <tr>
                             <td >
-                                <input type="checkbox" id="contains_check" onclick="filter()" />
+                                <input type="checkbox" id="contains_check" onclick="check_check_all()" />
                                 <label for="contains_check">message contains:</label>
                             </td>
 
                             <td colspan="2">
-                                <input type="text" id="contains_text" onkeyup="document.getElementById('contains_check').checked && filter()" />
+                                <input type="text" id="contains_text" />
                             </td>
                         </tr>
 
                         <tr>
                             <td>
-                                <input type="checkbox" id="after_check" onclick="filter()" />
+                                <input type="checkbox" id="after_check" onclick="check_check_all()" />
                                 <label for="after_check">date after:</label>
                             </td>
 
                             <td colspan="2">
-                                <input type="date" id="after_date" value="$after_date" min="$min_date" max="$max_date" onchange="document.getElementById('after_check').checked && filter()" />
+                                <input type="date" id="after_date" value="$after_date" min="$min_date" max="$max_date" />
                             </td>
                         </tr>
 
                         <tr>
                             <td>
-                                <input type="checkbox" id="before_check" onclick="filter()" />
+                                <input type="checkbox" id="before_check" onclick="check_check_all()" />
                                 <label for="before_check">date before:</label>
                             </td>
 
                             <td colspan="2">
-                                <input type="date" id="before_date" value="$before_date" min="$min_date" max="$max_date" onchange="document.getElementById('before_check').checked && filter()" />
+                                <input type="date" id="before_date" value="$before_date" min="$min_date" max="$max_date" />
                             </td>
                         </tr>
 
                         <tr>
                             <td>
-                                <input type="checkbox" id="no-media" checked onclick="filter()" />
+                                <input type="checkbox" id="no-media" checked onclick="check_check_all()" />
                                 <label for="no-media">without media ($no_media_count)</label>
                             </td>
 
                             <td>
-                                <input type="checkbox" id="image" checked onclick="filter()" />
+                                <input type="checkbox" id="image" checked onclick="check_check_all()" />
                                 <label for="image">images ($image_count)</label>
                             </td>
 
                             <td>
-                                <input type="checkbox" id="video" checked onclick="filter()" />
+                                <input type="checkbox" id="video" checked onclick="check_check_all()" />
                                 <label for="video">videos ($video_count)</label>
                             </td>
                         </tr>
 
                         <tr>
                             <td>
-                                <input type="checkbox" id="audio" checked onclick="filter()" />
+                                <input type="checkbox" id="audio" checked onclick="check_check_all()" />
                                 <label for="audio">audios ($audio_count)</label>
                             </td>
 
                             <td>
-                                <input type="checkbox" id="file" checked onclick="filter()" />
+                                <input type="checkbox" id="file" checked onclick="check_check_all()" />
                                 <label for="file">files ($file_count)</label>
                             </td>
 
                             <td>
-                                <input type="checkbox" id="location" checked onclick="filter()" />
+                                <input type="checkbox" id="location" checked onclick="check_check_all()" />
                                 <label for="location">locations ($location_count)</label>
                             </td>
                         </tr>
 
                         <tr>
                             <td>
-                                <input type="checkbox" id="link" checked onclick="filter()" />
+                                <input type="checkbox" id="link" checked onclick="check_check_all()" />
                                 <label for="link">links ($link_count)</label>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td colspan="3">
+                                <button type="button" style="float: right; width: 100px; height: 30px; font-size: 18px;" onclick="filter()">Filter</button>
                             </td>
                         </tr>
                     </tbody>
