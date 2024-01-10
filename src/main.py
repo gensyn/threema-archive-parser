@@ -1,9 +1,14 @@
 import argparse
+import os
 import re
 import shutil
 from os import listdir
 from os.path import isdir, isfile, join, basename
 from pathlib import Path
+
+abspath = os.path.abspath(__file__)
+dname = os.path.dirname(abspath)
+os.chdir(join(dname, ".."))
 
 FILE_REGEX = "(&lt;((?:[a-f0-9]{8}|[a-f0-9]{16})-.*?\.([a-z0-9]{3,4}))&gt;)"
 

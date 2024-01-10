@@ -161,7 +161,7 @@
                     if (is_contains) {
                         value = document.getElementById('contains_text').value;
 
-                        if (value && !wrapper.children[0].innerHTML.includes(value)) {
+                        if (value && !wrapper.children[0].innerHTML.toLowerCase().includes(value.toLowerCase())) {
                             wrapper.style.display = 'none';
                             continue;
                         }
