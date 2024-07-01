@@ -10,13 +10,13 @@ abspath = os.path.abspath(__file__)
 dname = os.path.dirname(abspath)
 os.chdir(join(dname, ".."))
 
-FILE_REGEX = "(&lt;((?:[a-f0-9]{8}|[a-f0-9]{16})-.*?\.([a-z0-9]{3,4}))&gt;)"
+FILE_REGEX = r"(&lt;((?:[a-f0-9]{8}|[a-f0-9]{16})-.*?\.([a-z0-9]{3,4}))&gt;)"
 
-URL_REGEX = "(https?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+)"
+URL_REGEX = r"(https?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+)"
 
-MESSAGE_REGEX = "\[(\d{1,2}\.\d{1,2}\.\d{4}), (\d{1,2}:\d{2})\] (.+?): (.*)"
+MESSAGE_REGEX = r"\[(\d{1,2}\.\d{1,2}\.\d{4}), (\d{1,2}:\d{2})\] (.+?): (.*)"
 
-GEO_REGEX = "(&lt;geo:([0-9\.]*),([0-9\.]*)\?.*&gt;)"
+GEO_REGEX = r"(&lt;geo:([0-9\.]*),([0-9\.]*)\?.*&gt;)"
 
 CLASS_NO_MEDIA = "no_media"
 CLASS_IMAGE = "image"
@@ -54,13 +54,16 @@ def parse_message(path, message):
                 message = message.replace(match[0], f"<a href=\"{match[1]}\">MISSING FILE</a>")
             elif match[2] in ["jpg", "jpeg", "png", "gif"]:
                 has_image = True
-                message = message.replace(match[0], f"<br/><a href=\"{match[1]}\"><img src=\"{match[1]}\" width=300 /></a><br />")
+                message = message.replace(match[0],
+                                          f"<br/><a href=\"{match[1]}\"><img src=\"{match[1]}\" width=300 /></a><br />")
             elif match[2] in ["mp4"]:
                 has_video = True
-                message = message.replace(match[0], f"<br /><a href=\"{match[1]}\"><video controls><source src=\"{match[1]}\" /></video></a><br />")
+                message = message.replace(match[0],
+                                          f"<br /><a href=\"{match[1]}\"><video controls><source src=\"{match[1]}\" /></video></a><br />")
             elif match[2] in ["aac", "opus"]:
                 has_audio = True
-                message = message.replace(match[0], f"<br /><a href=\"{match[1]}\"><audio controls src=\"{match[1]}\"></audio></a><br />")
+                message = message.replace(match[0],
+                                          f"<br /><a href=\"{match[1]}\"><audio controls src=\"{match[1]}\"></audio></a><br />")
             else:
                 has_file = True
                 message = message.replace(match[0], f"<a href=\"{match[1]}\">{match[1]}</a>")
@@ -90,12 +93,15 @@ def parse_message(path, message):
             box_3 = str(float(lon) + zoom)
             box_4 = str(float(lat) + zoom)
 
-            message = message.replace(match[0], f"<iframe src=\"https://www.openstreetmap.org/export/embed.html?bbox={box_1}%2C{box_2}%2C{box_3}%2C{box_4}&amp;layer=mapnik&amp;marker={lat}%2C{lon}\"></iframe><br/><small><a href=\"https://www.openstreetmap.org/?mlat={lat}&amp;mlon={lon}#map=15/{lat}/{lon}\">View Larger Map</a></small>")
+            message = message.replace(match[0],
+                                      f"<iframe src=\"https://www.openstreetmap.org/export/embed.html?bbox={box_1}%2C{box_2}%2C{box_3}%2C{box_4}&amp;layer=mapnik&amp;marker={lat}%2C{lon}\"></iframe><br/><small><a href=\"https://www.openstreetmap.org/?mlat={lat}&amp;mlon={lon}#map=15/{lat}/{lon}\">View Larger Map</a></small>")
 
     message_parts = re.search(MESSAGE_REGEX, message)
 
     if message_parts:
-        return message_parts.group(1), message_parts.group(2), message_parts.group(3), message_parts.group(4), has_image, has_video, has_audio, has_file, has_link, has_location
+        return message_parts.group(1), message_parts.group(2), message_parts.group(
+            3), message_parts.group(
+            4), has_image, has_video, has_audio, has_file, has_link, has_location
 
     return None, None, None, message, has_image, has_video, has_audio, has_file, has_link, has_location
 
@@ -129,7 +135,8 @@ def create_html(path):
     previous_align = None
 
     for i in range(len(messages)):
-        date, time, author, message_content, message_has_image, message_has_video, message_has_audio, message_has_file, message_has_link, message_has_location = parse_message(path, messages[i])
+        date, time, author, message_content, message_has_image, message_has_video, message_has_audio, message_has_file, message_has_link, message_has_location = parse_message(
+            path, messages[i])
 
         if not date:
             # this message is just a new line of the previous message and was already processed
@@ -137,10 +144,11 @@ def create_html(path):
 
         classes = []
 
-        j = i+1
+        j = i + 1
         while j < len(messages):
             # look ahead for messages belonging to this one but seperated by line breaks
-            next_date, _, _, next_message_content, next_has_image, next_has_video, next_has_audio, next_has_file, next_has_link, next_has_location = parse_message(path, messages[j])
+            next_date, _, _, next_message_content, next_has_image, next_has_video, next_has_audio, next_has_file, next_has_link, next_has_location = parse_message(
+                path, messages[j])
 
             if next_date:
                 # new message found, no further look-ahead needed
@@ -237,7 +245,14 @@ def create_html(path):
 
     template = Path("src/index_template.html").read_text()
 
-    html = template.replace("$title", name).replace("$content", content).replace("$all", str(message_count)).replace("$no_media_count", str(no_media_count)).replace("$image_count", str(image_count)).replace("$video_count", str(video_count)).replace("$audio_count", str(audio_count)).replace("$file_count", str(file_count)).replace("$link_count", str(link_count)).replace("$location_count", str(location_count)).replace("$before_date", str(max_date)).replace("$after_date", str(min_date)).replace("$min_date", str(min_date)).replace("$max_date", str(max_date))
+    html = template.replace("$title", name).replace("$content", content).replace("$all",
+                                                                                 str(message_count)).replace(
+        "$no_media_count", str(no_media_count)).replace("$image_count", str(image_count)).replace(
+        "$video_count", str(video_count)).replace("$audio_count", str(audio_count)).replace(
+        "$file_count", str(file_count)).replace("$link_count", str(link_count)).replace(
+        "$location_count", str(location_count)).replace("$before_date", str(max_date)).replace(
+        "$after_date", str(min_date)).replace("$min_date", str(min_date)).replace("$max_date",
+                                                                                  str(max_date))
 
     with open(join(path, "index.html"), "w") as f:
         f.write(html)
