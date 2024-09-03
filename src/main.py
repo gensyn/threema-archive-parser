@@ -33,7 +33,7 @@ args = parser.parse_args()
 folder = args.folder
 
 if not isdir(folder):
-    raise ValueError("Given value for \"folder\" is not an acutal folder on this machine.")
+    raise ValueError("Given value for \"folder\" is not an actual folder on this machine.")
 
 
 def parse_message(path, message):
