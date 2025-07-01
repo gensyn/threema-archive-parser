@@ -1,1 +1,1 @@
-# threema-html-generator
+Parses archived Threema chats and saves them to a database.
