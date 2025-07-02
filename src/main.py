@@ -1,4 +1,7 @@
 import argparse
+from datetime import datetime
+from typing import List, Tuple, Dict
+
 import mysql.connector
 import os
 import re
@@ -19,6 +22,10 @@ FILE_REGEX = (r"(Bild|Video|Audio|Datei)(?:\:\s){0,1}(?:\s\(\d\d\:\d\d\)){0,1}(.
 URL_REGEX = r'(?:(?:http|https|ftp)://|www\.)[a-zA-Z0-9-._~:/?#[\]@!$&\'()*+,;=%]+(?:\.[a-zA-Z]{2,})(?:/[^\s]*)?|(?:^|\s)(www\.[\S]+(?:\.[a-zA-Z]{2,})(?:/[^\s]*)?)'
 
 GEO_REGEX = r"Ort(?:\:\s){0,1}(.*?)\s(?:<geo:([0-9\.]*),([0-9\.]*)\?.*>)"
+
+DATE_FORMAT = "%Y-%m-%d %H:%M"
+
+MESSAGE_ID = -1
 
 parser = argparse.ArgumentParser("Threema DB generator")
 parser.add_argument("--user", help="The chat messages' owner.")
@@ -128,7 +135,12 @@ def parse(path):
     with open(messages_path, "r") as f:
         messages = f.read()
 
-    messages_by_name = re.findall(REGEX_SPLIT_BY_NAME, messages, re.DOTALL)
+    messages_tuple = re.findall(REGEX_SPLIT_BY_NAME, messages, re.DOTALL)
+
+    messages_list = []
+
+    for message in messages_tuple:
+        messages_list.append(get_message_details(message))
 
     with closing(get_db_connection()) as connection:
         cursor = connection.cursor()
@@ -143,17 +155,18 @@ def parse(path):
         else:
             chat_id = result + 1
 
-        for message in messages_by_name:
-            author = message[5]
-            if author.startswith("~"):
-                author = author[1:]
+        for i, message in enumerate(messages_list):
+            message_parsed, message_has_no_media, message_image, message_video, message_audio, message_file, message_location, message_has_link, message_is_media_missing = parse_message(path, message["message"])
 
-            message_parsed, message_has_no_media, message_image, message_video, message_audio, message_file, message_location, message_has_link, message_is_media_missing = parse_message(path, message[6])
+            context = find_context(messages_list, i)
 
             insert_query = f'''
-            INSERT INTO {user} (chat, chat_id, author, date, time, message, has_no_media, image, 
-            video, audio, file, location, has_link, is_media_missing) VALUES
-            ('{chat}', {chat_id}, '{author}', '{message[2]}-{str(message[1].zfill(2))}-{str(message[0].zfill(2))}', '{message[3]}:{message[4]}', '{message_parsed}', {message_has_no_media}, '{message_image}', '{message_video}', '{message_audio}', '{message_file}', '{message_location}', {message_has_link}, {message_is_media_missing});
+            INSERT INTO {user} (message_id, chat, chat_id, author, date, time, 
+            message, has_no_media, image, video, audio,
+            file, location, has_link, is_media_missing, context) VALUES
+            ('{message["id"]}', '{chat}', {chat_id}, '{message["author"]}', '{message["date"]}', '{message["time"]}',
+            '{message_parsed}', {message_has_no_media}, '{message_image}', '{message_video}', '{message_audio}',
+            '{message_file}', '{message_location}', {message_has_link}, {message_is_media_missing}, '{context}');
             '''
             cursor.execute(insert_query)
 
@@ -161,6 +174,72 @@ def parse(path):
         connection.commit()
 
     pass
+
+
+def find_context(messages: List[Dict], index: int) -> str:
+    context = []
+
+    # gather at least 5 context messages before the message and then every message within 30 minutes of the previous
+    if len(messages[:index]) >= 5:
+        context.extend(messages[index-5:index])
+    else:
+        context.extend(messages[:index])
+
+    if len(messages[:index]) > 5:
+        for i in range(index-5, 0 , -1):
+            dt_prev = get_datetime(context[0])
+            dt_current = get_datetime(messages[i])
+
+            if abs((dt_prev - dt_current).total_seconds()) <= 1800:
+                context.insert(0, messages[i])
+            else:
+                break
+
+    # gather at least 5 context messages after the message and then every message within 30 minutes of the previous
+    if len(messages[index+1:]) >= 5:
+        context.extend(messages[index+1:index+6])
+    else:
+        context.extend(messages[index:])
+
+    if len(messages[index+1:]) > 5:
+        for i in range(len(messages))[index+6:]:
+            dt_prev = get_datetime(context[-1])
+            dt_current = get_datetime(messages[i])
+
+            if abs((dt_prev - dt_current).total_seconds()) <= 1800:
+                context.append(messages[i])
+            else:
+                break
+
+    return ",".join([str(m["id"]) for m in context])
+
+
+def get_message_details(message: Tuple) -> Dict:
+    author = message[5]
+    if author.startswith("~"):
+        author = author[1:]
+
+    m_date = f'{message[2]}-{str(message[1].zfill(2))}-{str(message[0].zfill(2))}'
+
+    m_time = f'{message[3]}:{message[4]}'
+
+    return {
+        "id": get_next_message_id(),
+        "author": author,
+        "date": m_date,
+        "time": m_time,
+        "message": message[6]
+    }
+
+def get_next_message_id() -> int:
+    global MESSAGE_ID
+    MESSAGE_ID += 1
+    return MESSAGE_ID
+
+
+def get_datetime(message: Dict) -> datetime:
+    dt_string = f"{message["date"]} {message["time"]}"
+    return datetime.strptime(dt_string, DATE_FORMAT)
 
 
 def traverse(path):
@@ -188,13 +267,14 @@ def init_db():
 
         create_table_query = f'''
         CREATE TABLE {user} (
-            id INT AUTO_INCREMENT PRIMARY KEY ,
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            message_id INT NOT NULL,
             chat VARCHAR(255) NOT NULL,
             chat_id INT NOT NULL,
             author VARCHAR(255) NOT NULL,
             date DATE NOT NULL,
             time TIME NOT NULL,
-            message VARCHAR(8192) NOT NULL,
+            message VARCHAR(8191) NOT NULL,
             has_no_media BOOLEAN NOT NULL,
             image VARCHAR(255) NOT NULL,
             video VARCHAR(255) NOT NULL,
@@ -202,7 +282,8 @@ def init_db():
             file VARCHAR(255) NOT NULL,
             location VARCHAR(255) NOT NULL,
             has_link BOOLEAN NOT NULL,
-            is_media_missing BOOLEAN NOT NULL
+            is_media_missing BOOLEAN NOT NULL,
+            context VARCHAR(4095) NOT NULL
         );
         '''
         cursor.execute(create_table_query)
